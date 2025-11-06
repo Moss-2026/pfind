@@ -17,7 +17,7 @@ void pfind_abort(char * str){
 
 static void pfind_print_help(pfind_options_t * res, option_help * args){
   printf("pfind \nSynopsis:\n"
-      "pfind <workdir> [-newer <timestamp file>] [-size <size>c] [-name <substr>] [-regex <regex>]\n"
+      "pfind <workdir> [-newer <timestamp file>] [-size <size>c] [-name <substr>] [-regex <regex>] [-gid <gid>] [-uid <uid>]\n"
       "\tworkdir = \"%s\"\n"
       "\t-newer = \"%s\"\n"
       "\t-name|-regex = \"%s\"\n", res->workdir, res->timestamp_file, res->name_pattern);
@@ -37,14 +37,27 @@ pfind_options_t * pfind_parse_args(int argc, char ** argv, int force_print_help,
   res->size = UINT64_MAX;
   res->queue_length = 100000;
   res->max_entries_per_iter = 1000;
+  res->uid = -1;
+  res->gid = -1;
   char * firstarg = NULL;
 
   // when we find special args, we process them
   // but we need to replace them with 0 so that getopt will ignore them
   // and getopt will continue to process beyond them
-  for(int i=1; i < argc - 1; i++){
+  for(int i=1; i < argc - 1; i++){    
     if(strcmp(argv[i], "-newer") == 0){
       res->timestamp_file = strdup(argv[i+1]);
+      argv[i][0] = 0;
+      argv[++i][0] = 0;
+    }else if(strcmp(argv[i], "-uid") == 0){
+      char * str = argv[i+1];
+      res->uid = atoll(str);
+      argv[i][0] = 0;
+      argv[++i][0] = 0;
+    }else if(strcmp(argv[i], "-gid") == 0){
+      printf("%s %d\n", argv[i], strcmp(argv[i], "-gid") == 0);
+      char * str = argv[i+1];
+      res->gid = atoll(str);
       argv[i][0] = 0;
       argv[++i][0] = 0;
     }else if(strcmp(argv[i], "-size") == 0){

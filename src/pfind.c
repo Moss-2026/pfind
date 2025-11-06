@@ -185,6 +185,8 @@ pfind_find_results_t * pfind_find(pfind_options_t * lopt){
     MPI_Bcast(&runtime.ctime_min, 1, MPI_INT, 0, pfind_com);
   }
 
+  printf("TIME: %lld", runtime.ctime_min);
+
   if(opt->results_dir && ! opt->just_count){
     char outfile[10240];
     sprintf(outfile, "%s/%d.txt", opt->results_dir, pfind_rank);
@@ -203,7 +205,7 @@ pfind_find_results_t * pfind_find(pfind_options_t * lopt){
   char * bsend_buf = smalloc( bsend_size );
   MPI_Buffer_attach( bsend_buf, bsend_size );
 
-  if(opt->timestamp_file || opt->size != UINT64_MAX){
+  if(opt->timestamp_file || opt->size != UINT64_MAX || opt->uid != -1 || opt->gid != -1){
     runtime.needs_stat = 1;
   }
   //ior_aiori_t * backend = aiori_select(opt->backend_name);
@@ -509,6 +511,7 @@ static char  find_file_type(unsigned char c) {
 static void check_buf(struct stat buf, char * path){
     // compare values
     if(opt->timestamp_file){
+      printf("CMP %lld<%lld\n", buf.st_ctime, runtime.ctime_min);
       if( (uint64_t) buf.st_ctime < runtime.ctime_min ){
         if(opt->verbosity >= 2){
           printf("Timestamp too small: %s\n", path);
@@ -525,6 +528,22 @@ static void check_buf(struct stat buf, char * path){
         return;
       }
     }
+    if(opt->uid != (uid_t) -1){
+      if(buf.st_uid != opt->uid){
+        if(opt->verbosity >= 2){
+          printf("UID does not match: %s has %lld\n", path, (long long int) buf.st_uid);
+        }
+        return;
+      }
+    }    
+    if(opt->gid != (uid_t) -1){
+      if(buf.st_gid != opt->gid){
+        if(opt->verbosity >= 2){
+          printf("GID does not match: %s has %lld\n", path, (long long int) buf.st_gid);
+        }
+        return;
+      }
+    }    
     if(! opt->just_count){
       fprintf(runtime.logfile, "%s\n", path);
     }

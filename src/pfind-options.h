@@ -19,6 +19,8 @@ typedef struct {
   int print_rates;
   int delete_files;
   int delete_dirs;
+  uid_t uid;
+  uid_t gid;
 
   char * timestamp_file;
   char * name_pattern;
