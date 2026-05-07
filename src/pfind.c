@@ -724,6 +724,10 @@ static int find_do_readdir(char *path, uint64_t dir_start, uint64_t dir_end) {
             find_do_lstat(cur_path);
           }
           
+          pos = telldir(d);
+          current_dir.pos_cur = pos;
+          current_dir.pos_end = dir_end;
+
           return 1;
         }
     }
