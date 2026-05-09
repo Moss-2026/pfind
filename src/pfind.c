@@ -320,7 +320,7 @@ pfind_find_results_t * pfind_find(pfind_options_t * lopt){
         CHECK_MPI
         debug("[%d] msg ready from %d !\n", pfind_rank, requesting_rank);
 
-        int work_to_give = pending_work / 2;
+        int work_to_give = (pending_work == 1) ? (pending_work) : (pending_work / 2);
         if(opt->parallel_single_dir_access && pending_work == 0 && current_dir.dir != NULL){
           // the current node keeps the current position but updates the end
           // the requester receives new position and updates position.
@@ -388,7 +388,7 @@ pfind_find_results_t * pfind_find(pfind_options_t * lopt){
 
     int work_received = 0;
     int steal_neighbor = pfind_rank;
-    if (pending_work == 0 && phase < 2){
+    if (pending_work == 0 && current_dir.dir == NULL && phase < 2){
       // send request for job stealing
       if(opt->steal_from_next) {
         steal_neighbor = ((rand() % 2) && (pfind_rank > 0)) ? pfind_rank - 1 : rand() % pfind_size;
@@ -723,6 +723,11 @@ static int find_do_readdir(char *path, uint64_t dir_start, uint64_t dir_end) {
             sprintf(cur_path, "%s/%s", path, entry->d_name);
             find_do_lstat(cur_path);
           }
+          
+          pos = telldir(d);
+          current_dir.pos_cur = pos;
+          current_dir.pos_end = dir_end;
+
           return 1;
         }
     }
